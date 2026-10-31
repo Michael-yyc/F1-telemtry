@@ -1,0 +1,5 @@
+# Generated third-party Plotly JavaScript and SVG paths preserve upstream formatting.
+reports/generated/** linguist-generated=true
+reports/generated/*/telemetry.html -whitespace
+reports/*.svg -whitespace linguist-generated=true
+datasets/openf1/*.json linguist-generated=true

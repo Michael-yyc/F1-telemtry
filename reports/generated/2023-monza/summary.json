@@ -1,0 +1,110 @@
+{
+  "year": 2023,
+  "event": "Monza",
+  "status": "passed",
+  "segment": "Q3",
+  "source": "OpenF1",
+  "attribution": "OpenF1 contributors, https://openf1.org/",
+  "licence": "CC BY-NC-SA 4.0",
+  "laps": [
+    {
+      "driver": "VER",
+      "lap_number": 20,
+      "lap_seconds": 80.307,
+      "lap_start_session_seconds": 3545.358,
+      "sector_1_seconds": 26.758,
+      "sector_2_seconds": 27.049,
+      "sector_3_seconds": 26.5,
+      "compound": "SOFT",
+      "tyre_life": 1.0,
+      "fresh_tyre": null
+    },
+    {
+      "driver": "PER",
+      "lap_number": 20,
+      "lap_seconds": 80.688,
+      "lap_start_session_seconds": 3568.576,
+      "sector_1_seconds": 26.904,
+      "sector_2_seconds": 27.171,
+      "sector_3_seconds": 26.613,
+      "compound": "SOFT",
+      "tyre_life": 1.0,
+      "fresh_tyre": null
+    }
+  ],
+  "recorded_gap_s": 0.3810000000000002,
+  "estimated_gap_s": 0.45285962900615573,
+  "discrepancy_s": 0.0718596290061555,
+  "distance_coverage": 0.9988880656671336,
+  "warnings": [],
+  "sections": [
+    {
+      "start_m": 664.6860125868054,
+      "end_m": 1164.6860125868054,
+      "VER": {
+        "braking_onset_m": 764.6860125868054,
+        "minimum_speed_kmh": 74.0,
+        "minimum_speed_m": 943.4876792534722,
+        "high_throttle_return_m": 1016.7171236979165,
+        "high_throttle_seconds": 2.961000000000001,
+        "observed_start_m": 692.5415681423609,
+        "observed_end_m": 1141.72420703125
+      },
+      "PER": {
+        "braking_onset_m": 793.7267743055559,
+        "minimum_speed_kmh": 66.0,
+        "minimum_speed_m": 953.925385416667,
+        "high_throttle_return_m": 1007.2142743055559,
+        "high_throttle_seconds": 3.7990000000000004,
+        "observed_start_m": 699.9212187500002,
+        "observed_end_m": 1162.3292743055558
+      }
+    },
+    {
+      "start_m": 1888.6394848090283,
+      "end_m": 2388.6394848090285,
+      "VER": {
+        "braking_onset_m": 1988.6394848090283,
+        "minimum_speed_kmh": 109.0,
+        "minimum_speed_m": 2111.78559592014,
+        "high_throttle_return_m": 2176.868929253473,
+        "high_throttle_seconds": 4.559000000000001,
+        "observed_start_m": 1889.2672625868058,
+        "observed_end_m": 2376.03809592014
+      },
+      "PER": {
+        "braking_onset_m": 2008.0031631944446,
+        "minimum_speed_kmh": 107.0,
+        "minimum_speed_m": 2119.8701076388893,
+        "high_throttle_return_m": 2181.475663194445,
+        "high_throttle_seconds": 4.481000000000002,
+        "observed_start_m": 1892.6698298611116,
+        "observed_end_m": 2365.0538576388894
+      }
+    },
+    {
+      "start_m": 2654.780595920141,
+      "end_m": 3154.780595920141,
+      "VER": {
+        "braking_onset_m": 2754.780595920141,
+        "minimum_speed_kmh": 184.0,
+        "minimum_speed_m": 2828.9861514756963,
+        "high_throttle_return_m": 2856.070873697918,
+        "high_throttle_seconds": 5.839000000000006,
+        "observed_start_m": 2657.3472625868076,
+        "observed_end_m": 3145.9003181423627
+      },
+      "PER": {
+        "braking_onset_m": 2761.653440972224,
+        "minimum_speed_kmh": 183.0,
+        "minimum_speed_m": 2852.681218750002,
+        "high_throttle_return_m": 2865.0627465277794,
+        "high_throttle_seconds": 5.401000000000003,
+        "observed_start_m": 2661.3312187500014,
+        "observed_end_m": 3119.7994131944465
+      }
+    }
+  ],
+  "self_comparison_gap_s": 0.0,
+  "swapped_gap_s": -0.45285962900615573
+}

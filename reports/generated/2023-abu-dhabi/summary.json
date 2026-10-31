@@ -1,0 +1,112 @@
+{
+  "year": 2023,
+  "event": "Abu Dhabi",
+  "status": "passed",
+  "segment": "Q3",
+  "source": "OpenF1",
+  "attribution": "OpenF1 contributors, https://openf1.org/",
+  "licence": "CC BY-NC-SA 4.0",
+  "laps": [
+    {
+      "driver": "VER",
+      "lap_number": 11,
+      "lap_seconds": 83.445,
+      "lap_start_session_seconds": 2993.883,
+      "sector_1_seconds": 17.151,
+      "sector_2_seconds": 35.894,
+      "sector_3_seconds": 30.4,
+      "compound": "SOFT",
+      "tyre_life": 1.0,
+      "fresh_tyre": null
+    },
+    {
+      "driver": "PER",
+      "lap_number": 13,
+      "lap_seconds": 84.171,
+      "lap_start_session_seconds": 3045.226,
+      "sector_1_seconds": 17.309,
+      "sector_2_seconds": 36.259,
+      "sector_3_seconds": 30.603,
+      "compound": "SOFT",
+      "tyre_life": 3.0,
+      "fresh_tyre": null
+    }
+  ],
+  "recorded_gap_s": 0.7260000000000133,
+  "estimated_gap_s": 0.6016181848153792,
+  "discrepancy_s": -0.12438181518463409,
+  "distance_coverage": 0.9984280455644946,
+  "warnings": [
+    "Estimated finish gap differs from timing by over 0.100 s; treat local gains cautiously."
+  ],
+  "sections": [
+    {
+      "start_m": 187.02131944444443,
+      "end_m": 687.0213194444444,
+      "VER": {
+        "braking_onset_m": 287.02131944444443,
+        "minimum_speed_kmh": 167.0,
+        "minimum_speed_m": 384.6134027777777,
+        "high_throttle_return_m": 424.7245138888888,
+        "high_throttle_seconds": 4.9990000000000006,
+        "observed_start_m": 205.0102083333333,
+        "observed_end_m": 676.074375
+      },
+      "PER": {
+        "braking_onset_m": 291.9738194444444,
+        "minimum_speed_kmh": 164.0,
+        "minimum_speed_m": 391.92937500000005,
+        "high_throttle_return_m": 432.7154861111112,
+        "high_throttle_seconds": 5.278,
+        "observed_start_m": 194.96784722222222,
+        "observed_end_m": 683.7924305555556
+      }
+    },
+    {
+      "start_m": 1201.5872916666665,
+      "end_m": 1701.5872916666665,
+      "VER": {
+        "braking_onset_m": 1301.5872916666665,
+        "minimum_speed_kmh": 105.0,
+        "minimum_speed_m": 1431.1809027777776,
+        "high_throttle_return_m": 1474.1309027777777,
+        "high_throttle_seconds": 4.842000000000002,
+        "observed_start_m": 1202.9335416666665,
+        "observed_end_m": 1686.4990972222224
+      },
+      "PER": {
+        "braking_onset_m": 1309.5596527777784,
+        "minimum_speed_kmh": 101.0,
+        "minimum_speed_m": 1429.5139583333337,
+        "high_throttle_return_m": 1477.7693750000005,
+        "high_throttle_seconds": 4.8409999999999975,
+        "observed_start_m": 1202.2207638888892,
+        "observed_end_m": 1683.3049305555558
+      }
+    },
+    {
+      "start_m": 2409.631875,
+      "end_m": 2909.631875,
+      "VER": {
+        "braking_onset_m": 2509.631875,
+        "minimum_speed_kmh": 67.0,
+        "minimum_speed_m": 2625.248402777778,
+        "high_throttle_return_m": 2714.423680555556,
+        "high_throttle_seconds": 4.000999999999991,
+        "observed_start_m": 2411.681875,
+        "observed_end_m": 2886.216041666667
+      },
+      "PER": {
+        "braking_onset_m": 2486.4374305555557,
+        "minimum_speed_kmh": 70.0,
+        "minimum_speed_m": 2637.0418749999994,
+        "high_throttle_return_m": 2726.2585416666666,
+        "high_throttle_seconds": 3.960000000000001,
+        "observed_start_m": 2413.087430555556,
+        "observed_end_m": 2904.9270138888887
+      }
+    }
+  ],
+  "self_comparison_gap_s": 0.0,
+  "swapped_gap_s": -0.6016181848153792
+}

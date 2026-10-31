@@ -1,0 +1,3 @@
+# Streamlit Community Cloud discovers this file automatically.
+-r requirements.lock
+-e .

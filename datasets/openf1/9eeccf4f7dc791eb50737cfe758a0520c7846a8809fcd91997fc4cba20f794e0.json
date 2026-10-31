@@ -1,0 +1,11 @@
+{
+  "endpoint": "pit",
+  "params": {
+    "session_key": 7768
+  },
+  "data": [],
+  "source": "https://api.openf1.org/v1/pit?session_key=7768",
+  "retrieved_utc": "2026-10-31T16:37:22.444425+00:00",
+  "licence": "CC BY-NC-SA 4.0",
+  "attribution": "OpenF1 contributors, https://openf1.org/"
+}
