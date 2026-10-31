@@ -3,7 +3,12 @@
 The default source is now **OpenF1 historical data**, https://openf1.org/.
 The bundled 2023 Bahrain, Monza and Abu Dhabi comparisons need no account,
 subscription, API key or network. Other selections query api.openf1.org using
-rate limiting and caching. See datasets/openf1/README.md for CC BY-NC-SA 4.0
+rate limiting and caching. On 31 October 2026, OpenF1 explicitly returned HTTP 401
+with “Live F1 session in progress” and stated that historical requests are also
+restricted to authenticated users until the live session ends. That is a temporary
+provider access restriction, not evidence that the selected driver's data is missing.
+Use the bundled Q3 VER/PER comparisons during it, or retry after it ends. No paid
+account is needed for bundled examples. See datasets/openf1/README.md for CC BY-NC-SA 4.0
 attribution, noncommercial and share-alike terms and the checksummed manifest.
 
 The published cloud public-network settings were verified active on 31 October

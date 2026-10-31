@@ -5,6 +5,7 @@ import streamlit as st
 from f1_analyser.analysis import DataQualityError, braking_windows, compare_laps, corner_metrics
 from f1_analyser.data import eligible_laps, lap_summary, lap_telemetry, load_session
 from f1_analyser.plots import telemetry_figure
+from f1_analyser.open_data import DataSourceError, bundled_telemetry
 
 
 st.set_page_config(page_title="F1 · Lap Lab", page_icon="🏎️", layout="wide")
@@ -49,7 +50,7 @@ except Exception as exc:
 
 st.subheader(f"{selected_year} {session.event['EventName']} · {session.name}")
 if selected_source == "OpenF1":
-    st.caption("Source: OpenF1. Selected laps have complete consistent sectors, dry tyres, no pit-out or recorded pit stop, and no matched deletion or caution record. Qualifying phase comes from race control. Source records may be incomplete; this is not FastF1's accuracy flag.")
+    st.caption("Source: OpenF1. Selected laps have complete consistent sectors, dry tyres, no pit-out or recorded pit stop, and no matched deletion or caution record. Qualifying laps more than 7% slower than that driver's best in the segment are excluded to reduce cooldown/in laps. Source records may be incomplete; this is not FastF1's accuracy flag.")
 else:
     st.caption("FastF1: accurate timing, undeleted, dry compound, green track, no pit entry or exit. Telemetry is checked after selection.")
 segment = st.selectbox("Qualifying segment / session", sorted(laps.Segment.unique()), index=len(laps.Segment.unique()) - 1)
@@ -71,7 +72,7 @@ with right:
 def choose_lap(driver, column, label):
     choices = laps[laps.Driver == driver].sort_values("LapTime")
     with column:
-        index = st.selectbox(label, list(choices.index), format_func=lambda i: f"Lap {int(choices.loc[i].LapNumber)} · {choices.loc[i].LapTime.total_seconds():.3f} s · tyre age {choices.loc[i].TyreLife:g}")
+        index = st.selectbox(label, list(choices.index), format_func=lambda i: f"Lap {int(choices.loc[i].LapNumber)} · {choices.loc[i].LapTime.total_seconds():.3f} s · tyre age {choices.loc[i].TyreLife:g}" + (" · offline snapshot" if bundled_telemetry(choices.loc[i]) else ""))
     return choices.loc[index]
 
 
@@ -80,6 +81,11 @@ b = choose_lap(driver_b, right, "Comparison lap")
 try:
     ta, tb = lap_telemetry(a), lap_telemetry(b)
     result = compare_laps(ta, tb, a.LapTime.total_seconds(), b.LapTime.total_seconds())
+except DataSourceError as exc:
+    st.error(str(exc))
+    st.info("Offline examples: OpenF1 → 2023 → Bahrain, Monza or Abu Dhabi → Q → Q3 → SOFT → VER / PER → each driver's fastest lap. Other selections may require a download.")
+    st.button("Retry telemetry download")
+    st.stop()
 except (DataQualityError, ValueError, KeyError) as exc:
     st.error(f"These laps cannot be compared reliably: {exc}")
     st.stop()

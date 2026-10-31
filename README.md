@@ -46,7 +46,10 @@ The bundle contains unchanged API response data, query URLs, retrieval timestamp
 and SHA-256 hashes. The loader checks each bundled response against the manifest.
 It prefers the bundle, then `.cache/openf1/`, then rate-limited HTTPS requests
 (less than 30 requests/minute). Network failures never become synthetic data.
-Queries outside the bundle require access to `api.openf1.org`.
+Queries outside the bundle require access to `api.openf1.org`. OpenF1 can temporarily
+restrict **all downloads, including historical data, during live F1 sessions**.
+The lap selector marks bundled laps as “offline snapshot”; those work throughout
+such restrictions. Download failures show recovery guidance and a retry button.
 
 FastF1 remains an optional dashboard source. Its original authenticated telemetry
 route is not needed for OpenF1. See [data access](reports/DATA_ACCESS.md) before
@@ -59,7 +62,9 @@ using it. Download caches, environments and login files must stay out of Git.
   recorded pit stops, matched deleted laps and laps intersecting caution records
   or starting under a recorded non-green track state. Qualifying phase is taken
   from explicit race-control phase records. These checks depend on source
-  completeness and are **not** FastF1's `IsAccurate` flag.
+  completeness and are **not** FastF1's `IsAccurate` flag. Qualifying laps more
+  than 7% slower than that driver's best eligible lap in the same segment are
+  excluded as a cooldown/in-lap heuristic; this is not the FIA 107% rule.
 - Deletion messages are matched by driver and reported duration where available:
   race-control and API lap numbers can differ. Without a duration, both adjacent
   number candidates are conservatively excluded. Reinstated laps stay excluded.
@@ -93,7 +98,7 @@ python -m pytest -q
 python scripts/analyse_sessions.py --all
 ```
 
-All **48 tests pass**, including the three real-snapshot comparisons with network
+All **58 tests pass**, including the three real-snapshot comparisons with network
 calls disabled. Real-session report generation succeeds for all three sessions;
 self-comparison gives zero and swapping laps reverses the gap's sign.
 
@@ -131,5 +136,5 @@ reports are measurement summaries, not independent causal explanations.
 
 A defensible CV description: “Built a Python/Streamlit F1 telemetry analyser,
 aligning signals by distance and validating lap-gap estimates across three
-historical qualifying sessions; implemented 48 automated checks and documented
+historical qualifying sessions; implemented 58 automated checks and documented
 sampling and data-quality limitations.” This is an independent educational project.

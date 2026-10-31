@@ -25,9 +25,64 @@ _lock = threading.Lock()
 _last_request = 0.0
 
 
+class DataSourceError(RuntimeError):
+    """A remote provider could not supply the requested data."""
+
+
+def _download(endpoint, params):
+    global _last_request
+    for attempt in range(2):
+        try:
+            with _lock:
+                delay = 2.1 - (time.monotonic() - _last_request)
+                if delay > 0:
+                    time.sleep(delay)
+                _last_request = time.monotonic()
+                response = requests.get(BASE + endpoint, params=params, timeout=30)
+            if response.status_code in (429, 502, 503, 504) and attempt == 0:
+                retry_after = getattr(response, "headers", {}).get("Retry-After", "2.1")
+                try:
+                    delay = float(retry_after)
+                except ValueError:
+                    delay = 2.1
+                # Respect longer server waits by returning control to the user.
+                if 0 <= delay <= 5:
+                    time.sleep(delay)
+                    continue
+            if response.status_code == 404 and response.json() == {"detail": "No results found."}:
+                return [], response.url
+            response.raise_for_status()
+            return response.json(), response.url
+        except requests.HTTPError as exc:
+            status = response.status_code
+            detail = ""
+            if status == 401:
+                try:
+                    payload = response.json()
+                    detail = payload.get("detail", "") if isinstance(payload, dict) else ""
+                except ValueError:
+                    pass
+            if isinstance(detail, str) and detail.startswith("Live F1 session in progress."):
+                message = ("OpenF1 temporarily restricts all API downloads, including historical sessions, "
+                           "while a live F1 session is in progress. Use a bundled comparison now, "
+                           "or retry after the live session ends.")
+            elif status == 429:
+                message = "OpenF1 is limiting downloads. Wait a minute, then retry this comparison."
+            elif status in (401, 403):
+                message = "OpenF1 refused this download. Try another lap or the bundled Bahrain Q3 VER/PER comparison."
+            else:
+                message = f"OpenF1 could not supply this download (HTTP {status}). Try again later or choose another lap."
+            raise DataSourceError(message) from exc
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            if attempt == 0:
+                continue
+            raise DataSourceError("Could not connect to OpenF1. Retry later or use the bundled Bahrain Q3 VER/PER comparison.") from exc
+        except requests.RequestException as exc:
+            raise DataSourceError("OpenF1 returned an unreadable response. Retry later or choose another lap.") from exc
+
+
 def query(endpoint, **params):
     """Prefer reproducible bundled responses, then cache, then rate-limited HTTPS."""
-    global _last_request
     key = hashlib.sha256(json.dumps([endpoint, params], sort_keys=True).encode()).hexdigest()
     for directory in (BUNDLED, CACHE):
         path = directory / f"{key}.json"
@@ -41,22 +96,11 @@ def query(endpoint, **params):
             if payload["endpoint"] != endpoint or payload["params"] != params:
                 raise DataQualityError("OpenF1 cache query mismatch.")
             return payload["data"]
-    with _lock:
-        # Free tier: 3 requests/s and 30/min. Serialise across Streamlit threads.
-        delay = 2.1 - (time.monotonic() - _last_request)
-        if delay > 0:
-            time.sleep(delay)
-        _last_request = time.monotonic()
-        response = requests.get(BASE + endpoint, params=params, timeout=60)
-        if response.status_code == 404 and response.json() == {"detail": "No results found."}:
-            data = []
-        else:
-            response.raise_for_status()
-            data = response.json()
+    data, url = _download(endpoint, params)
     if not isinstance(data, list):
         raise DataQualityError("OpenF1 returned an unexpected response.")
     CACHE.mkdir(parents=True, exist_ok=True)
-    payload = dict(endpoint=endpoint, params=params, data=data, source=response.url,
+    payload = dict(endpoint=endpoint, params=params, data=data, source=url,
                    retrieved_utc=pd.Timestamp.now(tz="UTC").isoformat(),
                    licence="CC BY-NC-SA 4.0", attribution="OpenF1 contributors, https://openf1.org/")
     (CACHE / f"{key}.json").write_text(json.dumps(payload, indent=2) + "\n")
@@ -129,7 +173,13 @@ def session_laps(meta, raw, drivers, stints, controls, pits):
                          Sector2Time=pd.Timedelta(sectors[1], unit="s"), Sector3Time=pd.Timedelta(sectors[2], unit="s"),
                          LapStartTime=start - pd.Timestamp(meta["date_start"]), DateStart=start.isoformat(),
                          SessionKey=meta["session_key"], Source="OpenF1"))
-    return pd.DataFrame(rows)
+    result = pd.DataFrame(rows)
+    if not result.empty and meta["session_type"] == "Qualifying":
+        # Sector-complete cooldown/in laps may exist where pit records are absent.
+        # This is a comparison heuristic, not the FIA's qualification rule.
+        fastest = result.groupby(["Driver", "Segment"]).LapTime.transform("min")
+        result = result[result.LapTime <= fastest * 1.07].copy()
+    return result
 
 
 def load_open_session(year, event, code="Q"):
@@ -181,10 +231,22 @@ def convert_car_data(raw, start, duration):
     return prepare_telemetry(out)
 
 
-def open_lap_telemetry(lap):
+def telemetry_params(lap):
     start = pd.Timestamp(lap.DateStart)
     duration = lap.LapTime.total_seconds()
-    samples = query("car_data", session_key=int(lap.SessionKey), driver_number=int(lap.DriverNumber),
-                    **{"date>": (start - pd.Timedelta(1, unit="s")).isoformat(),
-                       "date<": (start + pd.Timedelta(duration + 1, unit="s")).isoformat()})
-    return convert_car_data(samples, start, duration)
+    return dict(session_key=int(lap.SessionKey), driver_number=int(lap.DriverNumber),
+                **{"date>": (start - pd.Timedelta(1, unit="s")).isoformat(),
+                   "date<": (start + pd.Timedelta(duration + 1, unit="s")).isoformat()})
+
+
+def bundled_telemetry(lap):
+    """Availability hint only; query() still verifies integrity when reading."""
+    if lap.get("Source") != "OpenF1":
+        return False
+    key = hashlib.sha256(json.dumps(["car_data", telemetry_params(lap)], sort_keys=True).encode()).hexdigest()
+    return (BUNDLED / f"{key}.json").is_file()
+
+
+def open_lap_telemetry(lap):
+    samples = query("car_data", **telemetry_params(lap))
+    return convert_car_data(samples, lap.DateStart, lap.LapTime.total_seconds())

@@ -6,7 +6,7 @@ API key or further network-settings change is needed for the three examples.
 
 ## Verified
 
-- All **48 tests pass**, including real-snapshot comparisons with network access
+- All **58 tests pass**, including real-snapshot comparisons with network access
   disabled, data conversion, deleted-lap matching, checksums, and dashboard tests.
 - Real OpenF1 session processing succeeds for Bahrain, Monza and Abu Dhabi 2023 Q3.
 - Self-comparison gives zero and swapped-reference comparison reverses the sign.
@@ -42,3 +42,14 @@ GitHub publication and application hosting are separate operations; see
 No public website deployment, new environment snapshot or fresh-task restoration
 is claimed by these local validation results. The published startup configuration could not be edited after publication;
 current instructions are preserved in ENVIRONMENT_START.md and the README.
+
+## Hosted download-error fix
+
+Reproduced the Q1 metadata selection shown in the hosted screenshot. Slow laps
+(VER 132.516 s / PER 118.327 s) are now excluded by the qualifying pace heuristic.
+An independent API request confirmed a provider-wide historical-download restriction
+during live F1 sessions. The adapter now explains that restriction, bounds retries
+for transient failures, and the dashboard offers a retry button and explicit offline
+examples. Regression tests cover Q1 failure and recovery to bundled Q3 without an
+unhandled exception. This does not remove OpenF1's access restriction or establish
+availability of new downloads while it applies. No additional telemetry was bundled.

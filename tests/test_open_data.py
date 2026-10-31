@@ -60,8 +60,72 @@ def test_http_failure_is_not_empty_data(monkeypatch, tmp_path):
     monkeypatch.setattr(open_data, "BUNDLED", tmp_path / 'bundle')
     monkeypatch.setattr(open_data, "CACHE", tmp_path / 'cache')
     monkeypatch.setattr(open_data.requests, "get", lambda *a, **k: Forbidden())
-    with pytest.raises(open_data.requests.HTTPError):
+    with pytest.raises(open_data.DataSourceError, match="refused"):
         open_data.query("pit", session_key=1)
+
+
+@pytest.mark.parametrize("status,retry_after,calls", [(429, "0", 2), (503, "0", 2), (403, "0", 1), (429, "90", 1)])
+def test_download_retries_only_transient_short_waits(monkeypatch, status, retry_after, calls):
+    requests = []
+    def get(*a, **k):
+        response = open_data.requests.Response()
+        response.status_code = status if not requests else 200
+        response.headers["Retry-After"] = retry_after
+        response.url = "https://api.openf1.org/v1/car_data"
+        response._content = b'[{"speed": 180}]'
+        requests.append(response)
+        return response
+    monkeypatch.setattr(open_data.requests, "get", get)
+    monkeypatch.setattr(open_data.time, "sleep", lambda _: None)
+    if calls == 2:
+        assert open_data._download("car_data", {})[0] == [{"speed": 180}]
+    else:
+        with pytest.raises(open_data.DataSourceError):
+            open_data._download("car_data", {})
+    assert len(requests) == calls
+
+
+def test_timeout_is_bounded_and_does_not_leak_request_details(monkeypatch):
+    calls = []
+    def get(*a, **k):
+        calls.append(1)
+        raise open_data.requests.Timeout("private request diagnostic")
+    monkeypatch.setattr(open_data.requests, "get", get)
+    monkeypatch.setattr(open_data.time, "sleep", lambda _: None)
+    with pytest.raises(open_data.DataSourceError, match="Could not connect") as error:
+        open_data._download("car_data", {})
+    assert "private" not in str(error.value)
+    assert len(calls) == 2
+
+
+def test_q1_slow_laps_in_screenshot_are_excluded():
+    session = open_data.load_open_session(2023, "Bahrain", "Q")
+    laps = session.laps[(session.laps.Segment == "Q1") & session.laps.Driver.isin(["VER", "PER"])]
+    assert set(laps.LapNumber) == {3}
+    assert laps.LapTime.dt.total_seconds().max() < 92
+
+
+def test_live_session_restriction_is_explained_without_retry(monkeypatch):
+    import json
+    calls = []
+    def get(*a, **k):
+        calls.append(1)
+        response = open_data.requests.Response()
+        response.status_code = 401
+        response._content = json.dumps({"detail": "Live F1 session in progress. Global API access (including past sessions) is restricted to authenticated users until the session ends."}).encode()
+        return response
+    monkeypatch.setattr(open_data.requests, "get", get)
+    monkeypatch.setattr(open_data.time, "sleep", lambda _: None)
+    with pytest.raises(open_data.DataSourceError, match="while a live F1 session is in progress"):
+        open_data._download("car_data", {})
+    assert len(calls) == 1
+
+
+def test_offline_availability_hint_matches_real_bundle():
+    session = open_data.load_open_session(2023, "Bahrain", "Q")
+    laps = session.laps[session.laps.Driver == "VER"]
+    assert open_data.bundled_telemetry(laps[laps.Segment == "Q3"].sort_values('LapTime').iloc[0])
+    assert not open_data.bundled_telemetry(laps[laps.Segment == "Q1"].sort_values('LapTime').iloc[0])
 
 
 @pytest.mark.parametrize("event,recorded", [("Bahrain", .138), ("Monza", .381), ("Abu Dhabi", .726)])

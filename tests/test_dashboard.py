@@ -67,3 +67,52 @@ def test_dashboard_with_real_bahrain_snapshot():
     assert app.metric[0].value == "+0.138 s"
     assert app.metric[1].value == "+0.087 s"
     assert len(app.dataframe) == 4
+
+
+def test_telemetry_download_failure_is_recoverable(monkeypatch):
+    import streamlit as st
+    from f1_analyser.open_data import DataSourceError
+    st.cache_resource.clear()
+    calls = []
+    original = data.lap_telemetry
+    def interrupted(lap):
+        calls.append(1)
+        if len(calls) == 1:
+            raise DataSourceError("OpenF1 is limiting downloads. Wait a minute, then retry this comparison.")
+        return original(lap)
+    monkeypatch.setattr(data, "lap_telemetry", interrupted)
+    app = AppTest.from_file(str(APP)).run()
+    app.button[0].click().run(timeout=30)
+    assert not app.exception
+    assert "limiting downloads" in app.error[0].value
+    next(b for b in app.button if b.label == "Retry telemetry download").click().run(timeout=30)
+    assert not app.exception
+    assert not app.error
+    assert app.metric[0].value == "+0.138 s"
+
+
+def test_q1_provider_restriction_can_recover_to_offline_q3(monkeypatch):
+    import json
+    import requests
+    import streamlit as st
+    from f1_analyser import open_data
+    st.cache_resource.clear()
+    def blocked(*a, **k):
+        response = requests.Response()
+        response.status_code = 401
+        response._content = json.dumps({"detail": "Live F1 session in progress. Global API access is restricted."}).encode()
+        return response
+    monkeypatch.setattr(open_data.requests, "get", blocked)
+    monkeypatch.setattr(open_data.time, "sleep", lambda _: None)
+    app = AppTest.from_file(str(APP)).run()
+    app.button[0].click().run(timeout=30)
+    next(s for s in app.selectbox if s.label == "Qualifying segment / session").select("Q1").run(timeout=30)
+    assert not app.exception
+    assert "live F1 session" in app.error[0].value
+    assert "Offline examples" in app.info[0].value
+    laps = next(s for s in app.selectbox if s.label == "Reference lap")
+    assert all('132.516' not in label for label in laps.options)
+    next(s for s in app.selectbox if s.label == "Qualifying segment / session").select("Q3").run(timeout=30)
+    assert not app.exception
+    assert not app.error
+    assert app.metric[0].value == "+0.138 s"
